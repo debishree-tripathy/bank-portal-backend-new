@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 
 export default function UserLanding({ fullName, userId, role, onLogout }) {
-  const [balance, setBalance] = useState(null);
+  const [balance, setBalance] = useState(0);
   const [recentTransactions, setRecentTransactions] = useState([]);
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
 
-  // Fetch balance and recent transactions on component mount
+  // Fetch balance and transactions
   useEffect(() => {
     if (!userId) return;
 
@@ -14,19 +15,26 @@ export default function UserLanding({ fullName, userId, role, onLogout }) {
         const response = await axios.get(
           `http://localhost:8080/api/transactions/balance/${userId}`
         );
-        setBalance(response.data.balance);
+        setBalance(response.data?.balance ?? 0);
       } catch (err) {
         console.error("Error fetching balance:", err);
-        setBalance("Error fetching balance");
+        setBalance(0);
       }
     };
 
     const fetchTransactions = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:8080/api/transactions/recent/${userId}`
-        );
-        setRecentTransactions(response.data.transactions || []);
+        const endpoint = showAllTransactions
+          ? `/api/transactions/all/${userId}`
+          : `/api/transactions/recent/${userId}`;
+
+        const response = await axios.get(`http://localhost:8080${endpoint}`);
+
+        const data = Array.isArray(response.data?.transactions)
+          ? response.data.transactions
+          : [];
+
+        setRecentTransactions(data);
       } catch (err) {
         console.error("Error fetching transactions:", err);
         setRecentTransactions([]);
@@ -35,10 +43,13 @@ export default function UserLanding({ fullName, userId, role, onLogout }) {
 
     fetchBalance();
     fetchTransactions();
-  }, [userId]);
+  }, [userId, showAllTransactions]);
 
   const formatCurrency = (amount) =>
-    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(amount);
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+    }).format(amount);
 
   const formatDate = (dateString) =>
     new Date(dateString).toLocaleString("en-IN", {
@@ -70,7 +81,7 @@ export default function UserLanding({ fullName, userId, role, onLogout }) {
         </button>
       </aside>
 
-      {/* Main Content */}
+      {/* Main dashboard */}
       <main className="dashboard-main">
         <header className="dashboard-header">
           <h2>Welcome, {fullName}!</h2>
@@ -81,36 +92,62 @@ export default function UserLanding({ fullName, userId, role, onLogout }) {
           <div className="card">
             <h3>Current Balance</h3>
             <p style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-              {balance !== null ? formatCurrency(balance) : "Loading..."}
+              {formatCurrency(balance)}
             </p>
           </div>
 
-          {/* Recent Transactions */}
+          {/* Recent / All Transactions */}
           <div className="card">
-            <h3>Recent Transactions</h3>
+            <h3>Transactions</h3>
             {recentTransactions.length === 0 ? (
-              <p>No recent transactions</p>
+              <p>No transactions found</p>
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <th style={{ textAlign: "left", padding: "8px" }}>Date</th>
-                    <th style={{ textAlign: "left", padding: "8px" }}>Type</th>
-                    <th style={{ textAlign: "right", padding: "8px" }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentTransactions.map((tx) => (
-                    <tr key={tx.id} style={{ borderBottom: "1px solid #ccc" }}>
-                      <td style={{ padding: "8px" }}>{formatDate(tx.date)}</td>
-                      <td style={{ padding: "8px" }}>{tx.type}</td>
-                      <td style={{ padding: "8px", textAlign: "right" }}>
-                        {formatCurrency(tx.amount)}
-                      </td>
+              <>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left", padding: "8px" }}>Date</th>
+                      <th style={{ textAlign: "left", padding: "8px" }}>Type</th>
+                      <th style={{ textAlign: "right", padding: "8px" }}>
+                        Amount
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {recentTransactions.map((tx) => (
+                      <tr key={tx.id} style={{ borderBottom: "1px solid #ccc" }}>
+                        <td style={{ padding: "8px" }}>{formatDate(tx.date)}</td>
+                        <td style={{ padding: "8px" }}>{tx.type}</td>
+                        <td style={{ padding: "8px", textAlign: "right" }}>
+                          {formatCurrency(tx.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {recentTransactions.length >= 5 && (
+                  <button
+                    onClick={() =>
+                      setShowAllTransactions(!showAllTransactions)
+                    }
+                    style={{
+                      marginTop: "12px",
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      border: "1px solid #333",
+                      backgroundColor: "#007bff",
+                      color: "#fff",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {showAllTransactions
+                      ? "View Less Transactions"
+                      : "View All Transactions"}
+                  </button>
+                )}
+              </>
             )}
           </div>
 

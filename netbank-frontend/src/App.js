@@ -20,16 +20,15 @@ function Login({ onSwitchToSignup, onLoginSuccess }) {
       const { role, message, error, userId } = response.data;
 
       if (role) {
-        alert(message || "Login successful!");
         const fullName = message.replace("Welcome, ", "").replace("!", "");
-        onLoginSuccess(fullName, role, userId); // Pass userId
+        onLoginSuccess(fullName, role, userId); // send role too
       } else if (error) {
         alert(error);
       } else {
-        alert("Invalid username or password!");
+        alert("Invalid username/email or password!");
       }
-    } catch (error) {
-      alert(error.response?.data?.error || "Error connecting to backend");
+    } catch (err) {
+      alert(err.response?.data?.error || "Error connecting to backend");
     }
   };
 
@@ -86,7 +85,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggedInFullName, setLoggedInFullName] = useState("");
   const [loggedInRole, setLoggedInRole] = useState("");
-  const [loggedInUserId, setLoggedInUserId] = useState(null); // store userId
+  const [loggedInUserId, setLoggedInUserId] = useState(null);
 
   const handleLoginSuccess = (fullName, role, userId) => {
     setLoggedInFullName(fullName);
@@ -100,17 +99,27 @@ function App() {
     setLoggedInRole("");
     setLoggedInUserId(null);
     setIsLoggedIn(false);
+    setShowSignup(false);
   };
 
   return (
     <div className="App">
       {isLoggedIn ? (
-        <UserLanding
-          fullName={loggedInFullName}
-          userId={loggedInUserId} // pass userId to UserLanding
-          role={loggedInRole}
-          onLogout={handleLogout}
-        />
+        loggedInRole === "USER" ? (
+          <UserLanding
+            fullName={loggedInFullName}
+            userId={loggedInUserId}
+            role={loggedInRole}
+            onLogout={handleLogout}
+          />
+        ) : (
+          <div style={{ padding: "50px", textAlign: "center" }}>
+            <h2>Admin Dashboard Coming Soon</h2>
+            <button onClick={handleLogout} style={{ marginTop: "20px" }}>
+              Logout
+            </button>
+          </div>
+        )
       ) : showSignup ? (
         <Signup onSwitchToLogin={() => setShowSignup(false)} />
       ) : (

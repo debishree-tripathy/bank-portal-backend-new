@@ -12,7 +12,7 @@ export default function Signup({ onSwitchToLogin }) {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      const body = { firstName, lastName, email, phoneNumber, username, password, role: "USER" };
+      const body = { firstName, lastName, email, phoneNumber, username, password };
       const response = await axios.post("http://localhost:8080/api/users/register", body);
       if (response.status === 201 || response.status === 200) {
         alert(response.data.message || "Signup successful! Please login.");
