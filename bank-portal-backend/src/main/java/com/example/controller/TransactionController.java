@@ -33,9 +33,7 @@ public class TransactionController {
     // ===== Get Balance =====
     @GetMapping("/balance/{userId}")
     public Map<String, Object> getBalance(@PathVariable Long userId) {
-        System.out.println("Inside getBalance controller for user: " + userId);
         double balance = transactionService.getBalanceByUserId(userId);
-
         Map<String, Object> response = new HashMap<>();
         response.put("balance", balance);
         return response;
@@ -44,9 +42,16 @@ public class TransactionController {
     // ===== Get recent transactions =====
     @GetMapping("/recent/{userId}")
     public Map<String, Object> getRecentTransactions(@PathVariable Long userId) {
-        System.out.println("Inside getRecentTransactions controller for user: " + userId);
         List<Transaction> transactions = transactionService.getRecentTransactions(userId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("transactions", transactions);
+        return response;
+    }
 
+    // ===== Get all transactions for a user (for "View All") =====
+    @GetMapping("/all/{userId}")
+    public Map<String, Object> getAllTransactions(@PathVariable Long userId) {
+        List<Transaction> transactions = transactionService.getAllTransactions(userId);
         Map<String, Object> response = new HashMap<>();
         response.put("transactions", transactions);
         return response;
@@ -66,8 +71,6 @@ public class TransactionController {
         tx.setType(type); // "Credit" or "Debit"
         tx.setDate(LocalDateTime.now());
 
-        Transaction savedTx = transactionRepository.save(tx);
-        System.out.println("Added transaction: " + savedTx);
-        return savedTx;
+        return transactionRepository.save(tx);
     }
 }

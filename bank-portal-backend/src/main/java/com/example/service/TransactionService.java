@@ -3,6 +3,7 @@ package com.example.service;
 import com.example.model.Transaction;
 import com.example.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -14,14 +15,18 @@ public class TransactionService {
         this.transactionRepository = transactionRepository;
     }
 
-    // Get user balance (sum of credits - debits)
+    // ===== Get balance for a user =====
     public double getBalanceByUserId(Long userId) {
-        Double balance = transactionRepository.getUserBalance(userId);
-        return balance != null ? balance : 0.0;
+        return transactionRepository.calculateBalance(userId);  // Already returns 0 if no transactions
     }
 
-    // Get last 5 transactions
+    // ===== Get recent transactions (last 5) =====
     public List<Transaction> getRecentTransactions(Long userId) {
-        return transactionRepository.findTop5ByUser_IdOrderByDateDesc(userId);
+        return transactionRepository.findTop5ByUserIdOrderByDateDesc(userId);
+    }
+
+    // ===== Get all transactions for a user =====
+    public List<Transaction> getAllTransactions(Long userId) {
+        return transactionRepository.findByUser_IdOrderByDateDesc(userId);
     }
 }

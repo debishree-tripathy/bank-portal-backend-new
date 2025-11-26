@@ -15,44 +15,31 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    // Save user as plain text password
-    public User register(User user) {
-
-        // Check duplicates
+    // Register user
+    public void register(User user) {
         if (userRepository.existsByUsername(user.getUsername())) {
-            throw new IllegalArgumentException("Username already taken");
+            throw new IllegalArgumentException("Username already exists");
         }
         if (userRepository.existsByEmail(user.getEmail())) {
-            throw new IllegalArgumentException("Email already registered");
+            throw new IllegalArgumentException("Email already exists");
         }
         if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
-            throw new IllegalArgumentException("Phone number already registered");
+            throw new IllegalArgumentException("Phone number already exists");
         }
-        user.setRole("USER");
-        return userRepository.save(user);
-    }
 
-    // Login with plain text password
-    public Optional<User> login(String username, String password) {
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isPresent() && user.get().getPassword().equals(password)) {
-            System.out.println(" Logged in user: " + user.get().getUsername() + " (" + user.get().getRole() + ")");
-            return user;
-        } else {
-            System.out.println(" Invalid credentials for: " + username);
-            return Optional.empty();
-        }
+        userRepository.save(user);
     }
 
     // Login with username OR email
     public Optional<User> loginWithUsernameOrEmail(String usernameOrEmail, String password) {
-        Optional<User> user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
-        if (user.isPresent() && user.get().getPassword().equals(password)) {
-            System.out.println(" Logged in user: " + user.get().getUsername() + " (" + user.get().getRole() + ")");
-            return user;
-        } else {
-            System.out.println(" Invalid credentials for: " + usernameOrEmail);
-            return Optional.empty();
+        // ✅ Find user by username OR email
+        Optional<User> userOpt = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
+
+        // Check password
+        if (userOpt.isPresent() && userOpt.get().getPassword().equals(password)) {
+            return userOpt;
         }
+
+        return Optional.empty();
     }
 }

@@ -22,7 +22,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    // Signup
+    // ===== Signup =====
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> registerUser(@Valid @RequestBody User user) {
         Map<String, String> response = new HashMap<>();
@@ -31,26 +31,31 @@ public class UserController {
             response.put("message", "User registered successfully!");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalArgumentException e) {
-            // Duplicate found
             response.put("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
-    // Login
+    // ===== Login =====
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> loginUser(@RequestBody User loginRequest) {
-        // Use the new service method to login with username OR email
         Optional<User> user = userService.loginWithUsernameOrEmail(
                 loginRequest.getUsername(), loginRequest.getPassword());
 
         Map<String, Object> response = new HashMap<>();
         if (user.isPresent()) {
-            // Always show full name, never the typed username/email
             String fullName = user.get().getFirstName() + " " + user.get().getLastName();
             response.put("message", "Welcome, " + fullName + "!");
             response.put("role", user.get().getRole());
-            response.put("userId", user.get().getId()); // <-- added userId
+            response.put("userId", user.get().getId());
+
+            // Add redirect info based on role
+            if ("ADMIN".equalsIgnoreCase(user.get().getRole())) {
+                response.put("redirect", "ADMIN_DASHBOARD"); // For now placeholder
+            } else {
+                response.put("redirect", "USER_DASHBOARD");
+            }
+
             return ResponseEntity.ok(response);
         } else {
             response.put("error", "Invalid username/email or password");
